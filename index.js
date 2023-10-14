@@ -11,11 +11,11 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-    res.send("Toy Store Server");
+  res.send("Toy Store Server");
 })
 
 app.listen(port, () => {
-    console.log(`Toy Store Server is running on port: ${port}`);
+  console.log(`Toy Store Server is running on port: ${port}`);
 })
 
 console.log();
@@ -38,19 +38,44 @@ async function run() {
 
     const toysCollection = client.db("toysDB").collection("toys");
 
-    app.get("/toys", async(req, res) => {
+    app.get("/toys", async (req, res) => {
       const cursor = toysCollection.find();
       const result = await cursor.toArray();
-      console.log(result);
       res.send(result);
     })
 
-    app.post("/toys", async(req, res) => {
-        const toy = req.body;
-        console.log(toy);
-        const result = await toysCollection.insertOne(toy);
-        console.log(result);
-        res.send(result);
+    app.get("/toys/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await toysCollection.findOne(query);
+      res.send(result);
+    })
+
+    app.post("/toys", async (req, res) => {
+      const toy = req.body;
+      const result = await toysCollection.insertOne(toy);
+      res.send(result);
+    })
+
+    app.put("/toys/:id", async(req, res) => {
+      const id = req.params.id;
+      const toy = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateToy = {
+        $set: {
+          name: `${toy.name}`,
+          category: `${toy.category}`,
+          manufacturer: `${toy.manufacturer}`,
+          supplier: `${toy.supplier}`,
+          details: `${toy.details}`,
+          variant: `${toy.variant}`,
+          photoURL: `${toy.photoURL}`,
+        },
+      };
+      const result = await toysCollection.updateOne(filter, updateToy, options);
+      console.log(result);
+      res.send(result);
     })
 
     // Send a ping to confirm a successful connection
